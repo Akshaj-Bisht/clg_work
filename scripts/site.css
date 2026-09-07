@@ -14,10 +14,16 @@ h1 { max-width: 720px; font-size: clamp(3.2rem, 9vw, 7rem); letter-spacing: -.04
 .intro { max-width: 600px; margin: 24px 0 0; color: var(--muted); font-size: 1.2rem; }
 .hero-rule { width: 100%; height: 1px; margin-top: 58px; background: var(--line); }
 .library { padding-bottom: 80px; }
+.subjects { padding-bottom: 62px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .section-heading h2 { font-size: 2rem; }
 .updated { margin: 0; color: var(--muted); font: .8rem ui-monospace, SFMono-Regular, Menlo, monospace; }
 code { color: var(--teal); }
+.subject-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.subject-card { min-height: 156px; display: flex; flex-direction: column; justify-content: space-between; padding: 22px; background: #e8efeb; border-top: 3px solid var(--teal); }
+.subject-number { margin: 0; color: var(--accent); font: 700 1rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+.subject-card h3 { margin: 10px 0 4px; font-size: 1.25rem; line-height: 1.1; }
+.subject-card p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.4; }
 .notebook-card { display: grid; grid-template-columns: 74px 1fr; gap: 26px; padding: 30px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .notebook-card + .notebook-card { margin-top: 16px; }
 .card-index { color: var(--accent); font: 700 1.1rem ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -36,6 +42,7 @@ footer a { color: var(--teal); }
   .hero { padding-top: 58px; }
   .section-heading { display: block; }
   .updated { margin-top: 12px; }
+  .subject-grid { grid-template-columns: 1fr; }
   .notebook-card { grid-template-columns: 1fr; gap: 8px; padding: 22px; }
   footer { display: block; }
   footer a { display: block; margin-top: 8px; }

@@ -13,6 +13,11 @@ NOTEBOOK_OUTPUT = SITE / "notebooks"
 DOWNLOAD_OUTPUT = SITE / "downloads"
 STYLE_SOURCE = ROOT / "scripts" / "site.css"
 NOTEBOOK_STYLE_SOURCE = ROOT / "scripts" / "notebook.css"
+SUBJECTS = {
+    "dip": ("Digital Image Processing", "Image analysis, enhancement, and computer vision practicals."),
+    "latex": ("LaTeX", "Reports, notes, and typeset coursework."),
+    "compiler-design": ("Compiler Design", "Parsing, language theory, and compiler implementations."),
+}
 
 
 def notebook_title(path, notebook):
@@ -74,6 +79,7 @@ def build_notebook(source_path, index):
     return {
         "title": title,
         "source": str(relative_path),
+        "subject_key": relative_path.parts[0] if relative_path.parts else "other",
         "html": f"notebooks/{safe_name}.html",
         "pdf": f"notebooks/{safe_name}.pdf",
         "download": f"downloads/{relative_path.as_posix()}",
@@ -81,12 +87,21 @@ def build_notebook(source_path, index):
 
 
 def write_index(notebooks):
+    subject_cards = []
+    for key, (name, description) in SUBJECTS.items():
+        count = sum(notebook["subject_key"] == key for notebook in notebooks)
+        subject_cards.append(f"""<article class="subject-card">
+  <p class="subject-number">{count:02d}</p>
+  <div><h3>{escape(name)}</h3><p>{escape(description)}</p></div>
+</article>""")
+
     cards = []
     for index, notebook in enumerate(notebooks, 1):
+        subject_name = SUBJECTS.get(notebook["subject_key"], ("Coursework", ""))[0]
         cards.append(f"""<article class="notebook-card">
   <div class="card-index">{index:02d}</div>
   <div class="card-content">
-    <p class="eyebrow">Notebook</p>
+    <p class="eyebrow">{escape(subject_name)}</p>
     <h2>{escape(notebook['title'])}</h2>
     <p class="filename">{escape(notebook['source'])}</p>
     <div class="actions">
@@ -102,20 +117,27 @@ def write_index(notebooks):
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image Processing | Notebook Library</title>
+    <title>clg_work | College Coursework</title>
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
   <main class="shell">
     <header class="hero">
-      <p class="eyebrow">Digital image processing</p>
-      <h1>Notebook library</h1>
-      <p class="intro">Rendered coursework with readable code, saved outputs, and downloads ready for the next experiment.</p>
+            <p class="eyebrow">clg_work / college coursework</p>
+            <h1>Study, rendered.</h1>
+            <p class="intro">A living archive of practical notebooks, reports, and implementations across the subjects that make up the course.</p>
       <div class="hero-rule"></div>
     </header>
+        <section class="subjects" aria-labelledby="subjects-title">
+            <div class="section-heading">
+                <div><p class="eyebrow">The curriculum</p><h2 id="subjects-title">Study areas</h2></div>
+                <p class="updated">Three folders, one evolving archive</p>
+            </div>
+            <div class="subject-grid">{''.join(subject_cards)}</div>
+        </section>
     <section class="library" aria-labelledby="library-title">
       <div class="section-heading">
-        <div><p class="eyebrow">{len(notebooks):02d} collection</p><h2 id="library-title">Practical notebooks</h2></div>
+                <div><p class="eyebrow">{len(notebooks):02d} published</p><h2 id="library-title">Notebook previews</h2></div>
         <p class="updated">Built automatically from <code>.ipynb</code> files</p>
       </div>
       {''.join(cards)}
