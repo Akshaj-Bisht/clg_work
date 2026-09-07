@@ -23,3 +23,7 @@ Upload a notebook exported from Google Colab as an `.ipynb` file anywhere in thi
 The `Build and publish notebook previews` GitHub Action validates every `.ipynb` file and publishes the preview site automatically whenever notebooks or the site builder change.
 
 The **Preview** link above opens the rendered notebook directly from this README. The **Download** link downloads the original notebook for Colab or Jupyter. To continue working in Colab, use **File > Open notebook > GitHub** and select the repository notebook.
+
+## LaTeX practicals
+
+PDFs placed in `latex/pdfs/` are used directly and are not rebuilt. If a `.tex` practical does not have a matching PDF in `latex/pdfs/`, the GitHub Action compiles it automatically. Both types appear on the website with browser preview and download links.

@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - "**.ipynb"
+      - "latex/**"
       - "scripts/**"
       - ".github/workflows/validate-notebooks.yml"
   pull_request:
     paths:
       - "**.ipynb"
+      - "latex/**"
       - "scripts/**"
       - ".github/workflows/validate-notebooks.yml"
 
@@ -36,6 +38,9 @@ jobs:
 
       - name: Install notebook preview tools
         run: python -m pip install "nbconvert[webpdf]"
+
+      - name: Install LaTeX compiler
+        run: sudo apt-get update && sudo apt-get install -y texlive-latex-base
 
       - name: Install Chromium dependencies
         run: python -m playwright install --with-deps chromium

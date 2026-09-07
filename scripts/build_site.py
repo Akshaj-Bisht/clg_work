@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 NOTEBOOK_OUTPUT = SITE / "notebooks"
 DOWNLOAD_OUTPUT = SITE / "downloads"
+PDF_OUTPUT = SITE / "pdfs"
 STYLE_SOURCE = ROOT / "scripts" / "site.css"
 NOTEBOOK_STYLE_SOURCE = ROOT / "scripts" / "notebook.css"
 SUBJECTS = {
@@ -57,6 +58,65 @@ def add_notebook_style(path):
     path.write_text(html.replace("</head>", f"{link}</head>", 1), encoding="utf-8")
 
 
+def latex_title(path):
+    source = path.read_text(encoding="utf-8")
+    match = re.search(r"\\title\{([^}]+)\}", source)
+    return match.group(1).strip() if match else path.stem.replace("_", " ").title()
+
+
+def copy_pdf(pdf_path, index, source_path, title, source_download=None):
+    relative_pdf = pdf_path.relative_to(ROOT)
+    safe_name = f"{index:02d}-latex-{re.sub(r'[^a-z0-9]+', '-', pdf_path.stem.lower()).strip('-')}"
+    output_path = PDF_OUTPUT / f"{safe_name}.pdf"
+    if pdf_path.resolve() != output_path.resolve():
+        shutil.copy2(pdf_path, output_path)
+    return {
+        "title": title,
+        "source": str(source_path.relative_to(ROOT) if source_path else relative_pdf),
+        "subject_key": "latex",
+        "kind": "latex",
+        "pdf": f"pdfs/{output_path.name}",
+        "download": f"pdfs/{output_path.name}",
+        "source_download": source_download,
+    }
+
+
+def build_latex_document(source_path, index):
+    source_path = source_path.resolve()
+    source_download_path = DOWNLOAD_OUTPUT / source_path.relative_to(ROOT)
+    source_download_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_path, source_download_path)
+    expected_pdf = source_path.parent / "pdfs" / f"{source_path.stem}.pdf"
+    if expected_pdf.exists():
+        pdf_path = expected_pdf
+    else:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", "-halt-on-error",
+                 "-output-directory", temporary_dir, source_path.name],
+                check=True,
+                cwd=source_path.parent,
+            )
+            pdf_path = Path(temporary_dir) / f"{source_path.stem}.pdf"
+            generated_pdf = PDF_OUTPUT / f"{index:02d}-latex-{source_path.stem}.pdf"
+            shutil.copy2(pdf_path, generated_pdf)
+            return copy_pdf(generated_pdf, index, source_path, latex_title(source_path),
+                            f"downloads/{source_path.relative_to(ROOT).as_posix()}")
+
+    return copy_pdf(
+        pdf_path,
+        index,
+        source_path,
+        latex_title(source_path),
+        f"downloads/{source_path.relative_to(ROOT).as_posix()}",
+    )
+
+
+def build_existing_latex_pdf(pdf_path, index):
+    pdf_path = pdf_path.resolve()
+    return copy_pdf(pdf_path, index, None, pdf_path.stem.replace("_", " ").title())
+
+
 def build_notebook(source_path, index):
     notebook = json.loads(source_path.read_text(encoding="utf-8"))
     title = notebook_title(source_path, notebook)
@@ -80,6 +140,7 @@ def build_notebook(source_path, index):
         "title": title,
         "source": str(relative_path),
         "subject_key": relative_path.parts[0] if relative_path.parts else "other",
+        "kind": "notebook",
         "html": f"notebooks/{safe_name}.html",
         "pdf": f"notebooks/{safe_name}.pdf",
         "download": f"downloads/{relative_path.as_posix()}",
@@ -98,6 +159,15 @@ def write_index(notebooks):
     cards = []
     for index, notebook in enumerate(notebooks, 1):
         subject_name = SUBJECTS.get(notebook["subject_key"], ("Coursework", ""))[0]
+        if notebook["kind"] == "latex":
+            actions = f"""<a class="button button-primary" href="{notebook['pdf']}">View PDF</a>
+      <a class="button" href="{notebook['download']}" download="{escape(notebook['title'])}.pdf">Download PDF</a>"""
+            if notebook.get("source_download"):
+                actions += f'\n      <a class="text-link" href="{notebook["source_download"]}" download>Source .tex</a>'
+        else:
+            actions = f"""<a class="button button-primary" href="{notebook['html']}">View preview</a>
+      <a class="button" href="{notebook['pdf']}">Download PDF</a>
+      <a class="text-link" href="{notebook['download']}" download="{escape(notebook['source'].split('/')[-1])}">Download notebook</a>"""
         cards.append(f"""<article class="notebook-card">
   <div class="card-index">{index:02d}</div>
   <div class="card-content">
@@ -105,9 +175,7 @@ def write_index(notebooks):
     <h2>{escape(notebook['title'])}</h2>
     <p class="filename">{escape(notebook['source'])}</p>
     <div class="actions">
-      <a class="button button-primary" href="{notebook['html']}">View preview</a>
-      <a class="button" href="{notebook['pdf']}">Download PDF</a>
-    <a class="text-link" href="{notebook['download']}" download="{escape(notebook['source'].split('/')[-1])}">Download notebook</a>
+            {actions}
     </div>
   </div>
 </article>""")
@@ -137,8 +205,8 @@ def write_index(notebooks):
         </section>
     <section class="library" aria-labelledby="library-title">
       <div class="section-heading">
-                <div><p class="eyebrow">{len(notebooks):02d} published</p><h2 id="library-title">Notebook previews</h2></div>
-        <p class="updated">Built automatically from <code>.ipynb</code> files</p>
+                <div><p class="eyebrow">{len(notebooks):02d} published</p><h2 id="library-title">Course resources</h2></div>
+            <p class="updated">Built from notebooks and LaTeX files</p>
       </div>
       {''.join(cards)}
     </section>
@@ -155,13 +223,31 @@ def main():
         shutil.rmtree(SITE)
     NOTEBOOK_OUTPUT.mkdir(parents=True)
     DOWNLOAD_OUTPUT.mkdir(parents=True)
+    PDF_OUTPUT.mkdir(parents=True)
     shutil.copy2(STYLE_SOURCE, SITE / "site.css")
     shutil.copy2(NOTEBOOK_STYLE_SOURCE, SITE / "notebook.css")
     notebooks = sorted(
         path for path in ROOT.rglob("*.ipynb")
         if ".git" not in path.parts and "site" not in path.parts
     )
-    write_index([build_notebook(path, index) for index, path in enumerate(notebooks, 1)])
+    resources = [build_notebook(path, index) for index, path in enumerate(notebooks, 1)]
+    latex_sources = sorted(
+        path for path in (ROOT / "latex").rglob("*.tex")
+        if "pdfs" not in path.parts
+    )
+    next_index = len(resources) + 1
+    represented_pdfs = set()
+    for path in latex_sources:
+        expected_pdf = path.parent / "pdfs" / f"{path.stem}.pdf"
+        if expected_pdf.exists():
+            represented_pdfs.add(expected_pdf.resolve())
+        resources.append(build_latex_document(path, next_index))
+        next_index += 1
+    for path in sorted((ROOT / "latex" / "pdfs").rglob("*.pdf")):
+        if path.resolve() not in represented_pdfs:
+            resources.append(build_existing_latex_pdf(path, next_index))
+            next_index += 1
+    write_index(resources)
 
 
 if __name__ == "__main__":
