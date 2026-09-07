@@ -107,7 +107,7 @@ def write_index(notebooks):
     <div class="actions">
       <a class="button button-primary" href="{notebook['html']}">View preview</a>
       <a class="button" href="{notebook['pdf']}">Download PDF</a>
-      <a class="text-link" href="{notebook['download']}">Notebook file</a>
+    <a class="text-link" href="{notebook['download']}" download="{escape(notebook['source'].split('/')[-1])}">Download notebook</a>
     </div>
   </div>
 </article>""")
