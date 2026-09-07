@@ -1,0 +1,139 @@
+import json
+import re
+import shutil
+import subprocess
+import tempfile
+from html import escape
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SITE = ROOT / "site"
+NOTEBOOK_OUTPUT = SITE / "notebooks"
+DOWNLOAD_OUTPUT = SITE / "downloads"
+STYLE_SOURCE = ROOT / "scripts" / "site.css"
+NOTEBOOK_STYLE_SOURCE = ROOT / "scripts" / "notebook.css"
+
+
+def notebook_title(path, notebook):
+    for cell in notebook.get("cells", []):
+        if cell.get("cell_type") != "markdown":
+            continue
+        source = "".join(cell.get("source", []))
+        match = re.search(r"^#\s+(.+)$", source, re.MULTILINE)
+        if match:
+            return re.sub(r"[*_`]", "", match.group(1)).strip()
+    return path.stem.replace("_", " ").title()
+
+
+def remove_colab_cells(notebook):
+    notebook["cells"] = [
+        cell
+        for cell in notebook.get("cells", [])
+        if "colab.research.google.com" not in "".join(cell.get("source", []))
+    ]
+    notebook.get("metadata", {}).pop("colab", None)
+    return notebook
+
+
+def run_nbconvert(notebook, output_dir, output_name, export_format):
+    command = [
+        "jupyter", "nbconvert", "--to", export_format,
+        "--output", output_name, "--output-dir", str(output_dir), str(notebook),
+    ]
+    if export_format == "webpdf":
+        command.append("--allow-chromium-download")
+    subprocess.run(command, check=True, cwd=ROOT)
+
+
+def add_notebook_style(path):
+    html = path.read_text(encoding="utf-8")
+    link = '<link rel="stylesheet" href="../notebook.css">'
+    path.write_text(html.replace("</head>", f"{link}</head>", 1), encoding="utf-8")
+
+
+def build_notebook(source_path, index):
+    notebook = json.loads(source_path.read_text(encoding="utf-8"))
+    title = notebook_title(source_path, notebook)
+    safe_name = f"{index:02d}-{re.sub(r'[^a-z0-9]+', '-', source_path.stem.lower()).strip('-')}"
+
+    with tempfile.TemporaryDirectory() as temporary_dir:
+        sanitized_path = Path(temporary_dir) / source_path.name
+        sanitized_path.write_text(
+            json.dumps(remove_colab_cells(notebook), ensure_ascii=False), encoding="utf-8"
+        )
+        run_nbconvert(sanitized_path, NOTEBOOK_OUTPUT, safe_name, "html")
+        run_nbconvert(sanitized_path, NOTEBOOK_OUTPUT, safe_name, "webpdf")
+    add_notebook_style(NOTEBOOK_OUTPUT / f"{safe_name}.html")
+
+    shutil.copy2(source_path, DOWNLOAD_OUTPUT / source_path.name)
+    return {
+        "title": title,
+        "source": source_path.name,
+        "html": f"notebooks/{safe_name}.html",
+        "pdf": f"notebooks/{safe_name}.pdf",
+        "download": f"downloads/{source_path.name}",
+    }
+
+
+def write_index(notebooks):
+    cards = []
+    for index, notebook in enumerate(notebooks, 1):
+        cards.append(f"""<article class="notebook-card">
+  <div class="card-index">{index:02d}</div>
+  <div class="card-content">
+    <p class="eyebrow">Notebook</p>
+    <h2>{escape(notebook['title'])}</h2>
+    <p class="filename">{escape(notebook['source'])}</p>
+    <div class="actions">
+      <a class="button button-primary" href="{notebook['html']}">View preview</a>
+      <a class="button" href="{notebook['pdf']}">Download PDF</a>
+      <a class="text-link" href="{notebook['download']}">Notebook file</a>
+    </div>
+  </div>
+</article>""")
+
+    index = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Image Processing | Notebook Library</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Digital image processing</p>
+      <h1>Notebook library</h1>
+      <p class="intro">Rendered coursework with readable code, saved outputs, and downloads ready for the next experiment.</p>
+      <div class="hero-rule"></div>
+    </header>
+    <section class="library" aria-labelledby="library-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">{len(notebooks):02d} collection</p><h2 id="library-title">Practical notebooks</h2></div>
+        <p class="updated">Built automatically from <code>.ipynb</code> files</p>
+      </div>
+      {''.join(cards)}
+    </section>
+    <footer><span>Image Processing</span><a href="https://github.com/Akshaj-Bisht/image-processing">View source on GitHub</a></footer>
+  </main>
+</body>
+</html>
+"""
+    (SITE / "index.html").write_text(index, encoding="utf-8")
+
+
+def main():
+    if SITE.exists():
+        shutil.rmtree(SITE)
+    NOTEBOOK_OUTPUT.mkdir(parents=True)
+    DOWNLOAD_OUTPUT.mkdir(parents=True)
+    shutil.copy2(STYLE_SOURCE, SITE / "site.css")
+    shutil.copy2(NOTEBOOK_STYLE_SOURCE, SITE / "notebook.css")
+    notebooks = sorted(ROOT.rglob("*.ipynb"))
+    write_index([build_notebook(path, index) for index, path in enumerate(notebooks, 1)])
+
+
+if __name__ == "__main__":
+    main()
