@@ -163,7 +163,7 @@ def write_index(notebooks):
     subject_cards = []
     for key, (name, description) in SUBJECTS.items():
         count = sum(notebook["subject_key"] == key for notebook in notebooks)
-        subject_cards.append(f"""<button class="subject-card subject-filter" type="button" data-filter="{key}">
+        subject_cards.append(f"""<button class="subject-card subject-filter" type="button" data-filter="{key}" aria-pressed="false">
   <p class="subject-number">{count:02d}</p>
   <div><h3>{escape(name)}</h3><p>{escape(description)}</p></div>
 </button>""")
@@ -220,14 +220,14 @@ def write_index(notebooks):
                                 <div><p class="eyebrow">{len(notebooks):02d} published</p><h2 id="library-title">Recent uploads</h2></div>
                 <button class="filter-reset is-active" type="button" data-filter="recent">Recent uploads</button>
       </div>
-      {''.join(cards)}
-            <p class="empty-state" hidden>No resources in this study area yet.</p>
+    {''.join(cards)}
+        <p class="empty-state is-hidden">No resources in this study area yet.</p>
     </section>
     <footer><span>College Coursework</span><a href="https://github.com/Akshaj-Bisht/clg_work">View source on GitHub</a></footer>
   </main>
     <script>
     const resources = [...document.querySelectorAll('.resource-card')];
-    const filters = [...document.querySelectorAll('[data-filter]')];
+    const filters = [...document.querySelectorAll('.subject-filter, .filter-reset')];
     const libraryTitle = document.querySelector('#library-title');
     const emptyState = document.querySelector('.empty-state');
     const subjectNames = {{dip: 'Digital Image Processing', latex: 'LaTeX', 'compiler-design': 'Compiler Design'}};
@@ -236,12 +236,16 @@ def write_index(notebooks):
         let visible = 0;
         resources.forEach((resource, index) => {{
             const show = filter === 'recent' ? index < 3 : resource.dataset.subject === filter;
-            resource.hidden = !show;
+            resource.classList.toggle('is-hidden', !show);
             if (show) visible += 1;
         }});
-        filters.forEach((button) => button.classList.toggle('is-active', button.dataset.filter === filter));
+        filters.forEach((button) => {{
+            const active = button.dataset.filter === filter;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', String(active));
+        }});
         libraryTitle.textContent = filter === 'recent' ? 'Recent uploads' : subjectNames[filter] + ' resources';
-        emptyState.hidden = visible !== 0;
+        emptyState.classList.toggle('is-hidden', visible !== 0);
     }}
 
     filters.forEach((button) => button.addEventListener('click', () => applyFilter(button.dataset.filter)));
