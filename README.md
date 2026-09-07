@@ -6,7 +6,9 @@ Topics may include image enhancement, filtering, segmentation, feature extractio
 
 ## Notebook preview site
 
-The rendered notebook website is available at **[Open the notebook library](https://akshaj-bisht.github.io/image-processing/)**. It includes syntax-highlighted code, saved outputs, browser previews, PDF downloads, and the original `.ipynb` files. Colab-only cells are removed from the published preview; the source notebooks are unchanged.
+The rendered notebook website is available at **[Open the notebook library](https://akshaj-bisht.github.io/clg_work/)**. It includes syntax-highlighted code, saved outputs, browser previews, PDF downloads, and the original `.ipynb` files. Colab-only cells are removed from the published preview; the source notebooks are unchanged.
+
+Coursework is organized into `dip/`, `latex/`, and `compiler-design/`. Add notebooks to the relevant folder and push to `main`; the preview site updates automatically.
 
 ## Colab notebooks
 
@@ -14,9 +16,9 @@ Upload a notebook exported from Google Colab as an `.ipynb` file anywhere in thi
 
 ### Available notebooks
 
-| Notebook    | Preview                                                                                              | PDF                                                                                         | Download                                                                                                   |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Practical 1 | [Open website preview](https://akshaj-bisht.github.io/image-processing/notebooks/01-dip-prac-1.html) | [Download PDF](https://akshaj-bisht.github.io/image-processing/notebooks/01-dip-prac-1.pdf) | [Download `.ipynb`](https://raw.githubusercontent.com/Akshaj-Bisht/image-processing/main/dip_prac_1.ipynb) |
+| Notebook    | Preview                                                                                          | PDF                                                                                     | Download                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Practical 1 | [Open website preview](https://akshaj-bisht.github.io/clg_work/notebooks/01-dip-dip-prac-1.html) | [Download PDF](https://akshaj-bisht.github.io/clg_work/notebooks/01-dip-dip-prac-1.pdf) | [Download `.ipynb`](https://raw.githubusercontent.com/Akshaj-Bisht/clg_work/main/dip/dip_prac_1.ipynb) |
 
 The `Build and publish notebook previews` GitHub Action validates every `.ipynb` file and publishes the preview site automatically whenever notebooks or the site builder change.
 

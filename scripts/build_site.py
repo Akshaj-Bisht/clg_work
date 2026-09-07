@@ -55,7 +55,9 @@ def add_notebook_style(path):
 def build_notebook(source_path, index):
     notebook = json.loads(source_path.read_text(encoding="utf-8"))
     title = notebook_title(source_path, notebook)
-    safe_name = f"{index:02d}-{re.sub(r'[^a-z0-9]+', '-', source_path.stem.lower()).strip('-')}"
+    relative_path = source_path.relative_to(ROOT)
+    relative_slug = "-".join(relative_path.with_suffix("").parts)
+    safe_name = f"{index:02d}-{re.sub(r'[^a-z0-9]+', '-', relative_slug.lower()).strip('-')}"
 
     with tempfile.TemporaryDirectory() as temporary_dir:
         sanitized_path = Path(temporary_dir) / source_path.name
@@ -66,13 +68,15 @@ def build_notebook(source_path, index):
         run_nbconvert(sanitized_path, NOTEBOOK_OUTPUT, safe_name, "webpdf")
     add_notebook_style(NOTEBOOK_OUTPUT / f"{safe_name}.html")
 
-    shutil.copy2(source_path, DOWNLOAD_OUTPUT / source_path.name)
+    download_path = DOWNLOAD_OUTPUT / relative_path
+    download_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_path, download_path)
     return {
         "title": title,
-        "source": source_path.name,
+        "source": str(relative_path),
         "html": f"notebooks/{safe_name}.html",
         "pdf": f"notebooks/{safe_name}.pdf",
-        "download": f"downloads/{source_path.name}",
+        "download": f"downloads/{relative_path.as_posix()}",
     }
 
 
@@ -116,7 +120,7 @@ def write_index(notebooks):
       </div>
       {''.join(cards)}
     </section>
-    <footer><span>Image Processing</span><a href="https://github.com/Akshaj-Bisht/image-processing">View source on GitHub</a></footer>
+    <footer><span>College Coursework</span><a href="https://github.com/Akshaj-Bisht/clg_work">View source on GitHub</a></footer>
   </main>
 </body>
 </html>
@@ -131,7 +135,10 @@ def main():
     DOWNLOAD_OUTPUT.mkdir(parents=True)
     shutil.copy2(STYLE_SOURCE, SITE / "site.css")
     shutil.copy2(NOTEBOOK_STYLE_SOURCE, SITE / "notebook.css")
-    notebooks = sorted(ROOT.rglob("*.ipynb"))
+    notebooks = sorted(
+        path for path in ROOT.rglob("*.ipynb")
+        if ".git" not in path.parts and "site" not in path.parts
+    )
     write_index([build_notebook(path, index) for index, path in enumerate(notebooks, 1)])
 
 
