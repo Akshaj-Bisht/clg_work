@@ -123,9 +123,9 @@ def write_index(notebooks):
 <body>
   <main class="shell">
     <header class="hero">
-            <p class="eyebrow">clg_work / college coursework</p>
-            <h1>Study, rendered.</h1>
-            <p class="intro">A living archive of practical notebooks, reports, and implementations across the subjects that make up the course.</p>
+            <p class="eyebrow">clg_work</p>
+            <h1>College coursework</h1>
+            <p class="intro">A clear, searchable home for notebooks, reports, and implementations across the course.</p>
       <div class="hero-rule"></div>
     </header>
         <section class="subjects" aria-labelledby="subjects-title">
