@@ -51,8 +51,13 @@ h1 { max-width: 680px; font-size: clamp(2.8rem, 7vw, 5.2rem); letter-spacing: -.
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 2px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 .subject-card:hover { background: var(--surface-hover); border-color: #3b4649; }
+.subject-card.is-active { border-color: var(--accent); }
 .subject-number { margin: 0; color: var(--accent); font: 700 .75rem ui-monospace, SFMono-Regular, Menlo, monospace; }
 .subject-card h3 { margin: 8px 0 5px; font-size: 1rem; }
 .subject-card p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.4; }
@@ -85,6 +90,10 @@ h1 { max-width: 680px; font-size: clamp(2.8rem, 7vw, 5.2rem); letter-spacing: -.
 .button-primary:hover { color: var(--accent-ink); background: #94e2d8; border-color: #94e2d8; }
 .text-link { color: var(--accent); padding-left: 3px; }
 .text-link:hover { color: #b0eee7; }
+.filter-reset { padding: 7px 11px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 2px; font: 700 .7rem ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; }
+.filter-reset:hover, .filter-reset.is-active { color: var(--accent); border-color: var(--accent); }
+.empty-state { padding: 28px 0; color: var(--muted); }
+[hidden] { display: none !important; }
 footer { display: flex; justify-content: space-between; gap: 16px; padding: 20px 0 28px; border-top: 1px solid var(--line); color: var(--faint); font-size: .7rem; }
 footer a { color: var(--muted); }
 footer a:hover { color: var(--accent); }

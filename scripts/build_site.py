@@ -117,6 +117,18 @@ def build_existing_latex_pdf(pdf_path, index):
     return copy_pdf(pdf_path, index, None, pdf_path.stem.replace("_", " ").title())
 
 
+def resource_timestamp(resource):
+    try:
+        output = subprocess.check_output(
+            ["git", "log", "-1", "--format=%ct", "--", resource["source"]],
+            cwd=ROOT,
+            text=True,
+        ).strip()
+        return int(output or 0)
+    except (OSError, subprocess.CalledProcessError, ValueError):
+        return 0
+
+
 def build_notebook(source_path, index):
     notebook = json.loads(source_path.read_text(encoding="utf-8"))
     title = notebook_title(source_path, notebook)
@@ -151,10 +163,10 @@ def write_index(notebooks):
     subject_cards = []
     for key, (name, description) in SUBJECTS.items():
         count = sum(notebook["subject_key"] == key for notebook in notebooks)
-        subject_cards.append(f"""<article class="subject-card">
+        subject_cards.append(f"""<button class="subject-card subject-filter" type="button" data-filter="{key}">
   <p class="subject-number">{count:02d}</p>
   <div><h3>{escape(name)}</h3><p>{escape(description)}</p></div>
-</article>""")
+</button>""")
 
     cards = []
     for index, notebook in enumerate(notebooks, 1):
@@ -168,7 +180,7 @@ def write_index(notebooks):
             actions = f"""<a class="button button-primary" href="{notebook['html']}">View preview</a>
       <a class="button" href="{notebook['pdf']}">Download PDF</a>
       <a class="text-link" href="{notebook['download']}" download="{escape(notebook['source'].split('/')[-1])}">Download notebook</a>"""
-        cards.append(f"""<article class="notebook-card">
+        cards.append(f"""<article class="notebook-card resource-card" data-subject="{notebook['subject_key']}">
   <div class="card-index">{index:02d}</div>
   <div class="card-content">
     <p class="eyebrow">{escape(subject_name)}</p>
@@ -205,13 +217,36 @@ def write_index(notebooks):
         </section>
     <section class="library" aria-labelledby="library-title">
       <div class="section-heading">
-                <div><p class="eyebrow">{len(notebooks):02d} published</p><h2 id="library-title">Course resources</h2></div>
-            <p class="updated">Built from notebooks and LaTeX files</p>
+                                <div><p class="eyebrow">{len(notebooks):02d} published</p><h2 id="library-title">Recent uploads</h2></div>
+                <button class="filter-reset is-active" type="button" data-filter="recent">Recent uploads</button>
       </div>
       {''.join(cards)}
+            <p class="empty-state" hidden>No resources in this study area yet.</p>
     </section>
     <footer><span>College Coursework</span><a href="https://github.com/Akshaj-Bisht/clg_work">View source on GitHub</a></footer>
   </main>
+    <script>
+    const resources = [...document.querySelectorAll('.resource-card')];
+    const filters = [...document.querySelectorAll('[data-filter]')];
+    const libraryTitle = document.querySelector('#library-title');
+    const emptyState = document.querySelector('.empty-state');
+    const subjectNames = {{dip: 'Digital Image Processing', latex: 'LaTeX', 'compiler-design': 'Compiler Design'}};
+
+    function applyFilter(filter) {{
+        let visible = 0;
+        resources.forEach((resource, index) => {{
+            const show = filter === 'recent' ? index < 3 : resource.dataset.subject === filter;
+            resource.hidden = !show;
+            if (show) visible += 1;
+        }});
+        filters.forEach((button) => button.classList.toggle('is-active', button.dataset.filter === filter));
+        libraryTitle.textContent = filter === 'recent' ? 'Recent uploads' : subjectNames[filter] + ' resources';
+        emptyState.hidden = visible !== 0;
+    }}
+
+    filters.forEach((button) => button.addEventListener('click', () => applyFilter(button.dataset.filter)));
+    applyFilter('recent');
+</script>
 </body>
 </html>
 """
@@ -247,6 +282,7 @@ def main():
         if path.resolve() not in represented_pdfs:
             resources.append(build_existing_latex_pdf(path, next_index))
             next_index += 1
+    resources.sort(key=resource_timestamp, reverse=True)
     write_index(resources)
 
 
