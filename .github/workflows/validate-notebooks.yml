@@ -1,0 +1,53 @@
+name: Validate notebooks
+
+on:
+  push:
+    paths:
+      - "**.ipynb"
+      - ".github/workflows/validate-notebooks.yml"
+  pull_request:
+    paths:
+      - "**.ipynb"
+      - ".github/workflows/validate-notebooks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate notebook files
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          notebooks = sorted(Path('.').rglob('*.ipynb'))
+          if not notebooks:
+              print('No notebooks found; validation skipped.')
+              raise SystemExit(0)
+
+          for path in notebooks:
+              try:
+                  notebook = json.loads(path.read_text(encoding='utf-8'))
+              except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+                  raise SystemExit(f'{path}: invalid JSON ({error})')
+
+              if not isinstance(notebook, dict):
+                  raise SystemExit(f'{path}: notebook root must be an object')
+              missing = {'cells', 'metadata', 'nbformat'} - notebook.keys()
+              if missing:
+                  raise SystemExit(f'{path}: missing required keys: {sorted(missing)}')
+
+              print(f'Validated {path}')
+          PY
