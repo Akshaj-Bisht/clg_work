@@ -1,0 +1,24 @@
+name: Check Compiler Design
+
+on:
+  push:
+    paths:
+      - "compiler-design/**"
+      - "scripts/validate_subject.py"
+  pull_request:
+    paths:
+      - "compiler-design/**"
+      - "scripts/validate_subject.py"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - run: python scripts/validate_subject.py compiler-design

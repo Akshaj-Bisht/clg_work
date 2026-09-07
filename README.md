@@ -10,6 +10,8 @@ The rendered notebook website is available at **[Open the notebook library](http
 
 Coursework is organized into `dip/`, `latex/`, and `compiler-design/`. Add notebooks to the relevant folder and push to `main`; the preview site updates automatically.
 
+Each subject also has its own fast GitHub Action check. Only the Action for the changed subject runs, while the shared Pages Action rebuilds the complete website.
+
 ## Colab notebooks
 
 Upload a notebook exported from Google Colab as an `.ipynb` file anywhere in this repository. GitHub automatically renders committed notebooks in its **Preview** view, including saved outputs.
