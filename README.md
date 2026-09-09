@@ -10,6 +10,22 @@ The rendered notebook website is available at **[Open the notebook library](http
 
 Coursework is organized into `dip/`, `latex/`, and `compiler-design/`. Add notebooks to the relevant folder and push to `main`; the preview site updates automatically.
 
+## Obsidian and Git workflow
+
+Use this repository as the coursework vault or keep it as a synced coursework
+folder inside your vault. Create subjects as top-level folders and place notes,
+practicals, books, guidelines, PDFs, notebooks, and attachments inside the
+matching subject. Commit and push with the Obsidian Git plugin; GitHub Actions
+builds and deploys the updated static site automatically.
+
+Recommended Obsidian Git settings:
+
+1. Pull before committing.
+2. Commit with a descriptive message such as `add dip practical 02`.
+3. Push after reviewing the changed files.
+
+The generated `site/` directory is build output and should not be edited by hand.
+
 Each subject also has its own fast GitHub Action check. Only the Action for the changed subject runs, while the shared Pages Action rebuilds the complete website.
 
 ## Colab notebooks

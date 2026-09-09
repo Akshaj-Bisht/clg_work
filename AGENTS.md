@@ -1,8 +1,11 @@
 # Multi-Agent Development Plan
 
-This file is the operating plan for evolving `clg_work` from a static GitHub Pages
-publisher into a coursework library with mobile uploads, subject management, and
-Obsidian integration.
+This file is the operating plan for evolving `clg_work` into a static coursework
+library authored through Obsidian and synchronized with Git.
+
+The current target architecture is static GitHub Pages. Do not extend the
+experimental Next.js/Supabase application unless the user explicitly changes this
+decision.
 
 ## Coordination Rules
 
@@ -30,9 +33,9 @@ release documentation.
 
 Tasks:
 
-- Define the first vertical slice: create subject, upload resource, view/download
-  resource.
-- Decide database entities, authentication boundary, storage contract, and API
+- Define the first static slice: discover subject, render resource, preview, and
+  download resource.
+- Decide repository folders, frontmatter, supported file types, and build output
   conventions before implementation agents begin.
 - Maintain the migration checklist from the current static site.
 - Merge branches in the order below, resolve conflicts, and run end-to-end checks.
@@ -43,61 +46,54 @@ unless integration is blocked.
 Prompt to send:
 
 > You are Agent 0, the coordinator for `clg_work`. Work only in the coordinator
-> worktree on `main`. Read `AGENTS.md`, define the first vertical slice and API/data
-> contracts, then coordinate the specialist branches. Do not edit specialist-owned
-> paths. Report decisions, merge order, validation results, and blockers.
+> worktree on `main`. Read `AGENTS.md`, define the static content/build contracts,
+> then coordinate the specialist branches. Do not edit specialist-owned paths.
+> Report decisions, merge order, validation results, and blockers.
 
-### Agent 1: Application foundation and backend
+### Agent 1: Static builder and resource discovery
 
-Owns: `app/`, `server/`, `supabase/`, `db/`, backend configuration, and backend
-tests. If the new application does not exist yet, this agent may create the
-minimal Next.js project structure in these paths.
+Owns: `scripts/build_site.py`, static resource models, and builder tests.
 
 Tasks:
 
-- Set up the Next.js/TypeScript application foundation and environment variable
-  contract.
-- Add Supabase schema/migrations for users, subjects, resources, files, and tags.
-- Implement authenticated subject CRUD and resource metadata APIs.
-- Implement protected file-upload metadata handling and storage integration.
-- Add validation, authorization, and backend tests.
+- Discover subjects and resources without a hardcoded subject registry.
+- Add Markdown/frontmatter, PDF, image, text, and ordinary document handling.
+- Generate stable resource metadata and links for the static site.
+- Preserve notebook and LaTeX behavior while extending the builder.
+- Add builder tests for supported and unsupported files.
 
-Dependencies: Agent 0's API and data contract.
+Dependencies: Agent 0's static content contract.
 
 Prompt to send:
 
-> You are Agent 1, backend. Work only in the `agent/backend` worktree. Read
-> `AGENTS.md` and implement the Next.js/Supabase foundation, schema, authenticated
-> subject/resource APIs, storage integration, and backend tests. Own only `app/`,
-> `server/`, `supabase/`, `db/`, backend configuration, and backend tests. Do not
-> edit frontend, processing, Obsidian, or migration-owned files. Commit your work
-> and report the commit hash and validation commands.
+> You are Agent 1, static builder. Work only in the `agent/builder` worktree. Read
+> `AGENTS.md` and extend `scripts/build_site.py` for recursive resource discovery,
+> Markdown/frontmatter, PDFs, images, text, and ordinary documents. Add builder
+> tests and preserve notebook/LaTeX behavior. Do not edit UI, Obsidian, or original
+> coursework files. Commit your work and report the commit hash and validation
+> commands.
 
-### Agent 2: Web and mobile frontend
+### Agent 2: Static site UI
 
-Owns: `components/`, `app/(dashboard)/`, `app/(auth)/`, `public/`, and frontend
-tests. It may consume Agent 1 APIs but must not edit database migrations or backend
-logic.
+Owns: `scripts/site.css`, generated page templates, and static UI tests.
 
 Tasks:
 
-- Build responsive dashboard, subject list/detail, resource list/detail, and
-  add-subject/upload flows.
-- Make file selection and upload usable on narrow phone screens.
-- Add loading, empty, error, permission, and upload-progress states.
-- Add search/filter controls without duplicating server-side authorization.
-- Add component and browser-level tests for the first vertical slice.
+- Build responsive subject/resource pages and mobile navigation.
+- Add client-side search and filters to the generated library.
+- Add resource type badges, preview states, and download actions.
+- Add browser-level checks for the generated static site.
 
-Dependencies: Agent 1's API contract and authentication behavior.
+Dependencies: Agent 1's generated resource metadata.
 
 Prompt to send:
 
-> You are Agent 2, frontend. Work only in the `agent/frontend` worktree. Read
-> `AGENTS.md` and build the responsive dashboard, subject pages, resource pages,
-> mobile upload flow, search/filter UI, and frontend tests against Agent 1's
-> documented contract. Own only `components/`, `app/(dashboard)/`, `app/(auth)/`,
-> `public/`, and frontend tests. Do not edit backend or database files. Commit your
-> work and report the commit hash and validation commands.
+> You are Agent 2, static UI. Work only in the `agent/ui` worktree. Read `AGENTS.md`
+> and build responsive subject/resource templates, mobile navigation, search,
+> filters, type badges, preview states, download actions, and static UI tests from
+> Agent 1's generated metadata. Own only `scripts/site.css`, generated templates,
+> and static UI tests. Do not edit builder logic or original coursework files.
+> Commit your work and report the commit hash and validation commands.
 
 ### Agent 3: File processing and preview pipeline
 
@@ -107,22 +103,22 @@ Tasks:
 
 - Extract the reusable notebook and LaTeX conversion behavior from
   `scripts/build_site.py` without breaking the current static publisher.
-- Define asynchronous processing states: pending, processing, ready, and failed.
-- Generate HTML/PDF previews and store processing errors safely.
+- Define local build processing states: pending, processing, ready, and failed.
+- Generate HTML/PDF previews and report processing errors clearly in the build.
 - Preserve the existing GitHub Pages build until the new pipeline is verified.
 
-Dependencies: Agent 1's resource/file status contract. This agent must not change
-the dashboard UI or database schema without coordinator approval.
+Dependencies: Agent 1's resource discovery contract. This agent must not change
+the static site templates or move source coursework without coordinator approval.
 
 Prompt to send:
 
 > You are Agent 3, processing pipeline. Work only in the `agent/processing`
 > worktree. Read `AGENTS.md` and extract reusable notebook/LaTeX processing from
-> `scripts/build_site.py`, add asynchronous processing states and preview generation,
-> and test failures/retries. Own only `workers/`, `processing/`,
+> `scripts/build_site.py`, add local preview generation and clear build failures,
+> and test retries. Own only `workers/`, `processing/`,
 > `scripts/processing/`, and processing tests. Preserve the current static publisher
-> and do not edit UI or database migrations. Commit your work and report the commit
-> hash and validation commands.
+> and do not edit UI or database code. Commit your work and report the commit hash
+> and validation commands.
 
 ### Agent 4: Obsidian integration
 
@@ -137,17 +133,17 @@ Tasks:
 - Add conflict handling, idempotency, and a dry-run mode before considering an
   Obsidian plugin.
 
-Dependencies: Agent 1's resource model. This agent must not alter the primary
-database source of truth.
+Dependencies: Agent 1's resource metadata. This agent must not introduce a
+database or alter source coursework outside managed export paths.
 
 Prompt to send:
 
 > You are Agent 4, Obsidian integration. Work only in the `agent/obsidian`
-> worktree. Read `AGENTS.md` and implement deterministic Markdown/frontmatter export,
-> relative attachment links, idempotency, conflict handling, and dry-run tests.
-> Own only `integrations/obsidian/`, `obsidian/`, sync documentation, and sync tests.
-> Treat the application database as the source of truth and do not edit its schema.
-> Commit your work and report the commit hash and validation commands.
+> worktree. Read `AGENTS.md` and document deterministic subject folders,
+> Markdown/frontmatter conventions, relative attachments, and Obsidian Git pull,
+> commit, and push settings. Own only `integrations/obsidian/`, `obsidian/`, sync
+> documentation, and sync tests. Do not add a web API or database. Commit your work
+> and report the commit hash and validation commands.
 
 ### Agent 5: Verification and migration
 
@@ -156,10 +152,10 @@ tests near another module only with that module agent's approval.
 
 Tasks:
 
-- Import existing `dip/`, `latex/`, and `compiler-design/` resources into a
-  staging database or fixture set without deleting source files.
+- Import existing `dip/`, `latex/`, and `compiler-design/` resources into static
+  fixtures without deleting source files.
 - Verify notebook, LaTeX, PDF, and ordinary document handling.
-- Add CI checks for typechecking, linting, unit tests, and migration safety.
+- Add CI checks for builder validation, static output, and migration safety.
 - Run the complete acceptance checklist after integration.
 
 Dependencies: Agents 1, 2, and 3. Agent 4 is included once its export contract
@@ -168,11 +164,11 @@ exists.
 Prompt to send:
 
 > You are Agent 5, verification and migration. Work only in the
-> `agent/verification` worktree. Read `AGENTS.md`, create safe import fixtures for
-> the existing `dip/`, `latex/`, and `compiler-design/` resources, verify file types,
-> and add CI checks for typecheck, lint, tests, and migration safety. Do not delete
-> or modify original coursework files. Commit your work and report the commit hash,
-> validation commands, and remaining risks.
+> `agent/verification` worktree. Read `AGENTS.md`, create safe static import
+> fixtures for the existing `dip/`, `latex/`, and `compiler-design/` resources,
+> verify file types, and add CI checks for the builder and generated site. Do not
+> delete or modify original coursework files. Commit your work and report the
+> commit hash, validation commands, and remaining risks.
 
 ## Worktree Setup
 
@@ -185,8 +181,8 @@ git fetch origin
 git switch main
 git pull --ff-only origin main
 
-git worktree add ../clg_work-agent-backend -b agent/backend main
-git worktree add ../clg_work-agent-frontend -b agent/frontend main
+git worktree add ../clg_work-agent-builder -b agent/builder main
+git worktree add ../clg_work-agent-ui -b agent/ui main
 git worktree add ../clg_work-agent-processing -b agent/processing main
 git worktree add ../clg_work-agent-obsidian -b agent/obsidian main
 git worktree add ../clg_work-agent-verification -b agent/verification main
@@ -200,11 +196,11 @@ share generated `node_modules`, virtual environments, build output, or local
 ## Merge Order
 
 1. Agent 0 records the architecture and contracts.
-2. Agent 1 merges the application foundation, schema, APIs, and backend tests.
-3. Agent 3 merges processing states and preview workers.
-4. Agent 2 merges the UI against the verified API and processing contracts.
-5. Agent 4 merges Obsidian export/sync.
-6. Agent 5 merges migration fixtures and CI verification.
+2. Agent 1 merges resource discovery and builder tests.
+3. Agent 3 merges notebook and LaTeX processing improvements.
+4. Agent 2 merges static templates, search, filters, and responsive UI.
+5. Agent 4 merges Obsidian Git documentation and conventions.
+6. Agent 5 merges static fixtures and CI verification.
 7. Agent 0 runs the complete acceptance checklist and updates documentation.
 
 For each branch:
@@ -242,12 +238,12 @@ discarding a branch wholesale.
 After successful integration and when no rollback is needed:
 
 ```sh
-git worktree remove ../clg_work-agent-backend
-git worktree remove ../clg_work-agent-frontend
+git worktree remove ../clg_work-agent-builder
+git worktree remove ../clg_work-agent-ui
 git worktree remove ../clg_work-agent-processing
 git worktree remove ../clg_work-agent-obsidian
 git worktree remove ../clg_work-agent-verification
-git branch -d agent/backend agent/frontend agent/processing agent/obsidian agent/verification
+git branch -d agent/builder agent/ui agent/processing agent/obsidian agent/verification
 ```
 
 Only the coordinator performs cleanup, and only after confirming the merged commits

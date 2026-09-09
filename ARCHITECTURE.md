@@ -1,193 +1,134 @@
 # Coursework Library Architecture
 
-Status: Agent 0 foundation contract
+Status: Agent 0 static-site contract
 
-## Product Boundary
+## Product Decision
 
-The new application will manage private coursework resources from desktop and
-phone. The existing static GitHub Pages site remains a public preview publisher
-during migration and must continue to build from repository content.
+`clg_work` is a static GitHub Pages site authored through an Obsidian vault and
+the Obsidian Git plugin. There is no application database, hosted authentication,
+or Supabase dependency in the target architecture.
 
-The first usable slice is:
+The workflow is:
 
-1. Sign in.
-2. Create, rename, archive, and list subjects.
-3. Upload a resource to a subject.
-4. View metadata and download the original file.
-5. Show processing status for files that support previews.
+1. Add or edit coursework in Obsidian.
+2. Obsidian Git commits and pushes the repository changes.
+3. GitHub Actions validates and builds the static site.
+4. GitHub Pages deploys the generated `site/` directory.
 
-Search, tags, previews, and Obsidian export build on this slice without changing
-the ownership model.
+The repository is the source of truth. Git provides history, rollback, and sync.
+The site is public unless the hosting model is changed later.
 
-## System Decisions
+## Repository Content Contract
 
-- Frontend and application API: Next.js with TypeScript.
-- Authentication, relational data, and initial object storage: Supabase.
-- Heavy notebook and LaTeX conversion: an asynchronous Python worker or job,
-  isolated from request handling.
-- Existing repository build: retained until imported resources and previews are
-  verified in the application.
-- Primary source of truth: application database and object storage.
-- Obsidian: a deterministic export/sync consumer, never the primary database.
-
-No service may expose a service-role key to the browser. Browser requests use the
-authenticated user's session, and storage/database policies enforce ownership.
-
-## Entities
-
-### `subjects`
+Subjects are top-level directories. Each subject may contain any supported
+resource type:
 
 ```text
-id: uuid primary key
-owner_id: uuid not null
-name: string not null
-description: string nullable
-archived_at: timestamp nullable
-created_at: timestamp not null
-updated_at: timestamp not null
+<subject>/
+  README.md
+  practicals/
+  notes/
+  books/
+  guidelines/
+  notebooks/
+  pdfs/
+  assets/
 ```
 
-Subject names are unique per owner among non-archived subjects. Archive is a
-soft-delete so existing resource links remain valid.
+Existing layouts such as `dip/`, `latex/`, and `compiler-design/` remain valid
+during migration. The builder must discover resources recursively and should not
+require a subject to be registered in Python code.
 
-### `resources`
+## Supported Resources
 
-```text
-id: uuid primary key
-owner_id: uuid not null
-subject_id: uuid not null
-title: string not null
-description: string nullable
-type: practical | note | book | guideline | assignment | reference | other
-status: pending | processing | ready | failed
-error_message: string nullable
-created_at: timestamp not null
-updated_at: timestamp not null
-```
+- Markdown: rendered as a readable resource page.
+- PDF: browser preview and download.
+- Jupyter notebook: sanitized HTML preview, PDF preview, and original download.
+- LaTeX: compiled PDF preview, source download, and compilation error reporting.
+- Images: responsive preview and download.
+- Plain text and source files: readable preview and download.
+- Other files: download-only resource with filename and size.
 
-The resource owner must equal the subject owner. Resource type is an explicit
-enum-like value so the UI and Obsidian exporter do not infer it from filenames.
-
-### `resource_files`
-
-```text
-id: uuid primary key
-resource_id: uuid not null
-kind: original | preview_html | preview_pdf | attachment
-storage_path: string not null
-mime_type: string not null
-size_bytes: integer not null
-checksum: string nullable
-created_at: timestamp not null
-```
-
-Original uploads are immutable. A replacement upload creates a new resource file
-record, allowing processing and downloads to remain traceable.
-
-### `tags` and `resource_tags`
-
-Tags are optional in the first upload form but their relationship is defined now
-so search does not require a later breaking migration.
-
-## API Contract
-
-The API must return consistent JSON envelopes:
-
-```json
-{"data": {}, "error": null}
-```
-
-Errors use:
-
-```json
-{"data": null, "error": {"code": "RESOURCE_NOT_FOUND", "message": "..."}}
-```
-
-Initial operations:
-
-```text
-GET    /api/subjects
-POST   /api/subjects
-PATCH  /api/subjects/:id
-DELETE /api/subjects/:id       # archive, not hard delete
-
-GET    /api/resources?subject_id=:id
-POST   /api/resources           # metadata plus upload intent
-GET    /api/resources/:id
-PATCH  /api/resources/:id
-POST   /api/resources/:id/files/complete
-GET    /api/resources/:id/download
-POST   /api/resources/:id/reprocess
-```
-
-Large files should use a signed upload URL. The browser uploads directly to
-storage, then calls the completion endpoint. The API verifies the storage object,
-records its metadata, and queues processing when the file type supports it.
-
-## Processing Contract
-
-Processing is idempotent for a resource file checksum. A worker may safely retry a
-job without producing duplicate active previews.
-
-```text
-pending -> processing -> ready
-pending -> processing -> failed
-failed  -> processing
-```
-
-Supported preview behavior is incremental:
-
-- PDF: browser preview from the original file.
-- Notebook: sanitized HTML and PDF generated by the existing conversion logic.
-- LaTeX: compiled PDF when compilation succeeds.
-- Other files: download-only until a processor exists.
-
-The current `scripts/build_site.py` must remain functional while processing logic
-is extracted.
-
-## Obsidian Contract
-
-Export paths are deterministic and scoped to an application-managed directory:
-
-```text
-<vault>/Coursework/<subject-slug>/<resource-slug>.md
-<vault>/Coursework/<subject-slug>/attachments/<resource-file-name>
-```
-
-Generated Markdown contains stable frontmatter:
+Optional Markdown frontmatter supplies stable metadata:
 
 ```yaml
 ---
-id: resource-uuid
-title: Resource title
-subject: Subject name
+title: Image Enhancement Practical
 type: practical
-status: ready
+subject: Digital Image Processing
+tags: [dip, practical]
+description: Histogram and spatial filtering experiments.
 ---
 ```
 
-The exporter must not overwrite files outside its managed directory. It must be
-idempotent, support dry-run output, and report conflicts rather than silently
-replacing a locally edited generated file.
+When frontmatter is absent, the builder derives a title and type from the path and
+filename. A malformed frontmatter block must produce a clear build error.
+
+## Site Contract
+
+The generated site must provide:
+
+- Subject index with resource counts.
+- Search across titles, descriptions, filenames, and tags.
+- Filters for subject and resource type.
+- Recent resources ordered by Git commit time.
+- Resource pages with preview, source path, and download links.
+- Mobile-friendly navigation and readable previews.
+- Clear empty, unsupported, and compilation-error states.
+
+The public site contains no edit form. Editing happens in Obsidian or directly in
+the repository, then becomes visible after the GitHub Actions deployment finishes.
+
+## Obsidian Git Workflow
+
+Use a vault whose coursework directory is the repository root or a synced
+subdirectory. Configure Obsidian Git to:
+
+- Pull before committing.
+- Commit changes with a timestamped message.
+- Push on demand or on a regular interval.
+- Keep generated `site/` output ignored locally and generated by Actions.
+
+The repository must not contain machine-specific vault settings, private notes, or
+secrets. The static build should publish only explicitly supported coursework
+directories.
+
+## GitHub Actions Contract
+
+The Pages workflow must run on pushes to `main` when coursework, builder styles,
+validation scripts, or workflow files change. It must:
+
+1. Check out the full repository history.
+2. Install Python, notebook tools, LaTeX, and browser dependencies.
+3. Validate resource metadata and supported files.
+4. Run the static builder.
+5. Upload and deploy the Pages artifact.
+
+Subject-specific validation workflows may remain for fast feedback, but the shared
+Pages build is the release check.
 
 ## Ownership Map
 
 | Area | Owner |
 | --- | --- |
-| Database, auth, API, storage | Agent 1 |
-| Dashboard and mobile UI | Agent 2 |
-| Notebook/LaTeX processing | Agent 3 |
-| Obsidian export and sync | Agent 4 |
-| Fixtures, migration, CI verification | Agent 5 |
-| Contracts, integration, release | Agent 0 |
+| Static architecture, integration, release docs | Agent 0 |
+| Static builder and resource discovery | Agent 1 |
+| Site UI, responsive layout, search, filters | Agent 2 |
+| Notebook and LaTeX processing | Agent 3 |
+| Obsidian/Git conventions and export helpers | Agent 4 |
+| Fixtures, validation, migration, CI checks | Agent 5 |
 
-Agents must treat this document as a contract. Changes require Agent 0 approval
-and must include an update to the affected tests or documentation.
+The experimental `app/`, `server/`, `supabase/`, and `db/` paths are not part of
+the target static architecture. They must not be extended unless the project
+explicitly returns to a database-backed app.
 
-## Baseline Safety
+## Migration Order
 
-The repository currently contains untracked coursework files. They are not part of
-the application baseline until explicitly reviewed. Before creating specialist
-worktrees, record the architecture and agent-plan files in a dedicated baseline
-commit, or create a temporary baseline branch that includes only those files.
-Never stage all files with `git add .` during this migration.
+1. Extend `scripts/build_site.py` to discover generic resources and frontmatter.
+2. Add resource pages, search, type filters, and mobile navigation.
+3. Move existing coursework into consistent subject subdirectories without
+   deleting originals until the build has been verified.
+4. Add Obsidian Git setup documentation and repository-safe conventions.
+5. Validate the full build locally and in GitHub Actions.
+6. Remove the unused Next/Supabase experiment only after the static site covers
+   the required workflows.
