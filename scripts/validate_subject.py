@@ -14,9 +14,11 @@ def validate_notebook(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("subject", choices=("dip", "latex", "compiler-design"))
+    parser.add_argument("subject", help="subject directory to validate")
     args = parser.parse_args()
     subject_path = Path(args.subject)
+    if not subject_path.is_dir():
+        raise ValueError(f"subject directory does not exist: {subject_path}")
     files = [path for path in subject_path.rglob("*") if path.is_file()]
 
     for path in sorted(subject_path.rglob("*.ipynb")):

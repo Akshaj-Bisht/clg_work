@@ -8,7 +8,11 @@ Topics may include image enhancement, filtering, segmentation, feature extractio
 
 The rendered notebook website is available at **[Open the notebook library](https://akshaj-bisht.github.io/clg_work/)**. It includes syntax-highlighted code, saved outputs, browser previews, PDF downloads, and the original `.ipynb` files. Colab-only cells are removed from the published preview; the source notebooks are unchanged.
 
-Coursework is organized into `dip/`, `latex/`, and `compiler-design/`. Add notebooks to the relevant folder and push to `main`; the preview site updates automatically.
+Coursework is organized into subject folders such as `dip/`, `latex/`,
+`compiler-design/`, and `cyber_forensics/`. Inside each subject, use
+`practicals/`, `notes/`, `books/`, `guidelines/`, `notebooks/`, and `assets/`.
+Add a resource to the relevant folder and push to `main`; the preview site updates
+automatically.
 
 ## Obsidian and Git workflow
 
@@ -36,7 +40,7 @@ Upload a notebook exported from Google Colab as an `.ipynb` file anywhere in thi
 
 | Notebook    | Preview                                                                                          | PDF                                                                                     | Download                                                                                               |
 | ----------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Practical 1 | [Open website preview](https://akshaj-bisht.github.io/clg_work/notebooks/01-dip-dip-prac-1.html) | [Download PDF](https://akshaj-bisht.github.io/clg_work/notebooks/01-dip-dip-prac-1.pdf) | [Download `.ipynb`](https://raw.githubusercontent.com/Akshaj-Bisht/clg_work/main/dip/dip_prac_1.ipynb) |
+| Practical 1 | Generated from the notebook in `dip/notebooks/` after the next Pages build | Generated PDF preview | [Download `.ipynb`](https://raw.githubusercontent.com/Akshaj-Bisht/clg_work/main/dip/notebooks/dip_prac_1.ipynb) |
 
 The `Build and publish notebook previews` GitHub Action validates every `.ipynb` file and publishes the preview site automatically whenever notebooks or the site builder change.
 
