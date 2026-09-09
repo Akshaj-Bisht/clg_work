@@ -1,0 +1,13 @@
+[
+  {"subject": "dip", "path": "dip/README.md", "kind": "document"},
+  {"subject": "dip", "path": "dip/dip_book.pdf", "kind": "book"},
+  {"subject": "dip", "path": "dip/dip_guidelinespdf", "kind": "guideline"},
+  {"subject": "dip", "path": "dip/dip_prac_1.ipynb", "kind": "notebook"},
+  {"subject": "latex", "path": "latex/README.md", "kind": "document"},
+  {"subject": "latex", "path": "latex/latex_guidelines.pdf", "kind": "guideline"},
+  {"subject": "latex", "path": "latex/pdfs/prac_1.pdf", "kind": "pdf"},
+  {"subject": "latex", "path": "latex/pdfs/prac_2.pdf", "kind": "pdf"},
+  {"subject": "latex", "path": "latex/prac_1.tex", "kind": "practical"},
+  {"subject": "compiler-design", "path": "compiler-design/COMPILER DESIGN_guidelines.pdf", "kind": "guideline"},
+  {"subject": "compiler-design", "path": "compiler-design/README.md", "kind": "document"}
+]
