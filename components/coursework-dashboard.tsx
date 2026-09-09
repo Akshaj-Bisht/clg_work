@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import './coursework-dashboard.css';
 
 type Subject = {
   id: string;
