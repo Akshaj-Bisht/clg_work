@@ -25,6 +25,15 @@ CATEGORY_NAMES = {
     "pdfs": "PDFs",
     "assets": "Assets",
 }
+CATEGORY_TYPES = {
+    "practicals": "practical",
+    "notes": "note",
+    "books": "book",
+    "guidelines": "guideline",
+    "notebooks": "notebook",
+    "pdfs": "pdf",
+    "assets": "asset",
+}
 SUPPORTED_TEXT = {".md", ".markdown", ".txt", ".py", ".c", ".cpp", ".h", ".java", ".js", ".ts", ".html", ".css", ".tex"}
 SKIP_NAMES = {"README.md"}
 
@@ -176,7 +185,7 @@ def build_resource(source_path, index):
     if extension in {".md", ".markdown"}:
         metadata, content = parse_frontmatter(source_path.read_text(encoding="utf-8"))
     title = str(metadata.get("title", title_from_path(source_path)))
-    kind = str(metadata.get("type", CATEGORY_NAMES.get(source_path.parent.name, extension.lstrip(".").upper())))
+    kind = str(metadata.get("type", CATEGORY_TYPES.get(source_path.parent.name, extension.lstrip(".").lower()))).lower()
     resource = {"title": title, "source": str(relative), "kind": kind, "subject_key": key, "subject_name": subject_name(key), "tags": metadata.get("tags", [])}
     resource["download"] = copy_download(source_path)
     safe_name = f"{index:02d}-{slug('-'.join(relative.with_suffix('').parts))}"
