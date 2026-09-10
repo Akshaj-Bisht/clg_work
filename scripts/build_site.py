@@ -34,6 +34,12 @@ CATEGORY_TYPES = {
     "pdfs": "pdf",
     "assets": "asset",
 }
+SUBJECT_LABELS = {
+    "dip": "Digital Image Processing",
+    "latex": "LaTeX",
+    "compiler-design": "Compiler Design",
+    "cyber_forensics": "Cyber Forensics",
+}
 SUPPORTED_TEXT = {".md", ".markdown", ".txt", ".py", ".c", ".cpp", ".h", ".java", ".js", ".ts", ".html", ".css", ".tex"}
 SKIP_NAMES = {"README.md"}
 
@@ -51,7 +57,7 @@ def subject_key(path):
 
 
 def subject_name(key):
-    return key.replace("-", " ").title()
+    return SUBJECT_LABELS.get(key, key.replace("-", " ").replace("_", " ").title())
 
 
 def parse_frontmatter(source):
