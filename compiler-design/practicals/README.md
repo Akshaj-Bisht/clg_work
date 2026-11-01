@@ -2,6 +2,8 @@
 
 These standalone Lex programs use C++ actions. The complete practical write-up, including source and sample output, is in [Compiler Design Practicals.md](Compiler%20Design%20Practicals.md). Practical 7 is retained as provided.
 
+For printing, use the formatted [Compiler Design Practicals PDF](Compiler%20Design%20Practicals.pdf). It includes syntax-highlighted source listings and line numbers. Regenerate it after editing the Markdown with `python scripts/render_compiler_practicals_pdf.py` from the repository root.
+
 ## Build and run
 
 Run these commands from this directory. Replace `N` with the practical number:
