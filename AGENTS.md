@@ -1,4 +1,4 @@
-# Multi-Agent Development Plan
+Multi-Agent Development Plan
 
 This file is the operating plan for evolving `clg_work` into a static coursework
 library authored through Obsidian and synchronized with Git.
