@@ -38,6 +38,7 @@ SUBJECT_LABELS = {
     "dip": "Digital Image Processing",
     "latex": "LaTeX",
     "compiler-design": "Compiler Design",
+    "ml": "Machine Learning",
     "cyber_forensics": "Cyber Forensics",
 }
 SUPPORTED_TEXT = {".md", ".markdown", ".txt", ".py", ".c", ".cpp", ".h", ".java", ".js", ".ts", ".html", ".css", ".tex"}

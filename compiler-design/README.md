@@ -1,3 +1,6 @@
 # Compiler Design
 
-Place compiler-design coursework, notes, and implementations in this folder.
+Compiler Design coursework and practical implementations.
+
+- [Practicals](practicals/README.md)
+- [Guidelines](guidelines/README.md)

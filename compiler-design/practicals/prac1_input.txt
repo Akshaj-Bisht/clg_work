@@ -1,0 +1,2 @@
+This is the input file for practical 1.
+It has two lines of text.
